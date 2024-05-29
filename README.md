@@ -479,3 +479,4 @@ sudo dnf install dnf-utils http://rpms.remirepo.net/enterprise/remi-release-9.rp
 ```
 sudo dnf module reset php
 ```
+yes
