@@ -399,7 +399,7 @@ In further steps, the following was done:
 
 #### Web Server 1
 
-1. Launch a new EC2 instance with RHEL Operating System
+1. Launch a new EC2 instance with RHEL Operating System, the instance type should be t3.small and make sure it is same subnet with NFSserver
 
 Result:
 
@@ -437,8 +437,22 @@ Result:
 sudo mkdir /var/www
 sudo mount -t nfs -o rw,nosuid 172.31.29.32:/mnt/apps /var/www
 ```
+Results:
 
-6. Open the text editor using vi
+<img width="563" alt="Screenshot 2024-06-04 at 17 00 10" src="https://github.com/sheezylion/Devops-tooling-website-solution/assets/142250556/fdd244f6-a141-4beb-8b8e-7f037cbfa13a">
+
+6. Verify that NFS was mounted successfully by running df -h. Ensure that the changes will persist after reboot.
+
+```
+df -h
+```
+
+Result:
+
+<img width="572" alt="Screenshot 2024-06-04 at 17 27 16" src="https://github.com/sheezylion/Devops-tooling-website-solution/assets/142250556/28d1eceb-05fe-4974-8181-d4efde136f53">
+
+
+7. Open the text editor using vi
 
    ```
    sudo vi /etc/fstab
@@ -454,7 +468,7 @@ Result:
 
 <img width="570" alt="Screenshot 2024-05-29 at 16 57 36" src="https://github.com/sheezylion/Devops-tooling-website-solution/assets/142250556/91fa2ba4-5ca6-481c-980f-b67594d5cb83">
 
-7. Install Remi's repoeitory, Apache and PHP
+8. Install Remi's repoeitory, Apache and PHP
 
 ```
 sudo yum install httpd -y
@@ -475,8 +489,358 @@ Result:
 ```
 sudo dnf install dnf-utils http://rpms.remirepo.net/enterprise/remi-release-9.rpm
 ```
-yes
+
+Result:
+
+<img width="553" alt="Screenshot 2024-06-04 at 17 31 52" src="https://github.com/sheezylion/Devops-tooling-website-solution/assets/142250556/6987d142-6603-4d9c-8db6-f8fae1234211">
+
 ```
 sudo dnf module reset php
 ```
-yes
+
+Result:
+
+<img width="573" alt="Screenshot 2024-06-04 at 17 32 47" src="https://github.com/sheezylion/Devops-tooling-website-solution/assets/142250556/13427bac-0549-400a-b1ef-9358c6317ed4">
+
+```
+sudo dnf module enable php:remi-8.2
+```
+
+Result:
+
+<img width="568" alt="Screenshot 2024-06-04 at 17 33 38" src="https://github.com/sheezylion/Devops-tooling-website-solution/assets/142250556/1dce9efe-e68d-4527-a664-ce56b5574feb">
+
+```
+sudo dnf install php php-opcache php-gd php-curl php-mysqlnd
+```
+
+Result:
+
+<img width="571" alt="Screenshot 2024-06-04 at 17 34 41" src="https://github.com/sheezylion/Devops-tooling-website-solution/assets/142250556/a4496ac2-15df-43c9-9d36-6bdb9bb0e29e">
+
+```
+sudo systemctl start php-fpm
+sudo systemctl enable php-fpm
+sudo systemctl status php-fpm
+
+sudo setsebool -P httpd_execmem 1  # Allows the Apache HTTP server (httpd) to execute memory that it can also write to. This is often needed for certain types of dynamic content and applications that may need to generate and execute code at runtime.
+sudo setsebool -P httpd_can_network_connect=1   # Allows the Apache HTTP server to make network connections to other servers.
+sudo setsebool -P httpd_can_network_connect_db=1  # allows the Apache HTTP server to connect to remote database servers.
+```
+
+Result:
+
+<img width="565" alt="Screenshot 2024-06-04 at 17 38 22" src="https://github.com/sheezylion/Devops-tooling-website-solution/assets/142250556/793f48b2-9a66-4b30-bfb1-7f05b4e08a97">
+
+
+#### Webserver 2
+1. Launch another new EC2 instance with RHEL Operating System
+
+Result:
+
+<img width="865" alt="Screenshot 2024-06-04 at 17 40 47" src="https://github.com/sheezylion/Devops-tooling-website-solution/assets/142250556/93ed460f-bc9c-4955-9af3-0c89e8bf42b5">
+
+2. Install NFS Client
+
+```
+sudo yum install nfs-utils nfs4-acl-tools -y
+```
+
+Result:
+
+<img width="412" alt="Screenshot 2024-06-04 at 17 43 58" src="https://github.com/sheezylion/Devops-tooling-website-solution/assets/142250556/423993ac-768f-433a-9ccd-f400372a28ba">
+
+3. Mount /var/www/ and target the NFS server's export for apps. NFS Server private IP address = 172.31.21.18
+
+```
+sudo mkdir /var/www
+sudo mount -t nfs -o rw,nosuid 172.31.21.18:/mnt/apps /var/www
+```
+
+4. Verify that NFS was mounted successfully by running df -h. Ensure that the changes will persist after reboot.
+
+```
+sudo vi /etc/fstab
+```
+
+Add the following line
+
+```
+172.31.21.18:/mnt/apps /var/www nfs defaults 0 0
+```
+
+Result:
+
+<img width="437" alt="Screenshot 2024-06-04 at 17 46 50" src="https://github.com/sheezylion/Devops-tooling-website-solution/assets/142250556/c693dfbe-79d0-46bc-81cb-b1e1446def3a">
+
+5. Install Remi's repoeitory, Apache and PHP
+
+```
+sudo yum install httpd -y
+```
+
+Result:
+
+<img width="428" alt="Screenshot 2024-06-04 at 17 48 16" src="https://github.com/sheezylion/Devops-tooling-website-solution/assets/142250556/600329a9-d19b-4afb-8eac-98a5ca9fc4cf">
+
+```
+sudo dnf install https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm
+```
+
+Result:
+
+<img width="430" alt="Screenshot 2024-06-04 at 17 48 56" src="https://github.com/sheezylion/Devops-tooling-website-solution/assets/142250556/59ccb8b8-f9ef-4838-8043-45841ad5520c">
+
+```
+sudo dnf install dnf-utils http://rpms.remirepo.net/enterprise/remi-release-9.rpm
+```
+
+Result:
+
+<img width="431" alt="Screenshot 2024-06-04 at 17 50 03" src="https://github.com/sheezylion/Devops-tooling-website-solution/assets/142250556/5f9a71b1-379d-4694-8e6c-516bb9b071b1">
+
+```
+sudo dnf module reset php
+```
+
+Result:
+
+<img width="421" alt="Screenshot 2024-06-04 at 17 51 08" src="https://github.com/sheezylion/Devops-tooling-website-solution/assets/142250556/5e9102d0-3a0a-4283-a4a3-5781d0d58ade">
+
+```
+sudo dnf module enable php:remi-8.2
+```
+
+Result:
+
+<img width="413" alt="Screenshot 2024-06-04 at 17 51 52" src="https://github.com/sheezylion/Devops-tooling-website-solution/assets/142250556/95243ab9-385f-4c44-879a-bdc1b2cfd6d4">
+
+```
+sudo dnf install php php-opcache php-gd php-curl php-mysqlnd
+```
+
+Result:
+
+<img width="422" alt="Screenshot 2024-06-04 at 17 53 27" src="https://github.com/sheezylion/Devops-tooling-website-solution/assets/142250556/91acb0be-46b1-44d1-8a41-cc97496ac963">
+
+```
+sudo systemctl start php-fpm
+sudo systemctl enable php-fpm
+sudo systemctl status php-fpm
+sudo setsebool -P httpd_execmem 1
+```
+
+Result:
+
+<img width="429" alt="Screenshot 2024-06-04 at 17 54 29" src="https://github.com/sheezylion/Devops-tooling-website-solution/assets/142250556/8d4677eb-cc8c-458d-ba7c-7fc23d6c0c61">
+
+#### Web server 3
+
+We would repeat same process of webserver1 and webserver 2
+
+1. Launch another new EC2 instance with RHEL Operating System
+
+Result:
+
+<img width="920" alt="Screenshot 2024-06-04 at 17 56 12" src="https://github.com/sheezylion/Devops-tooling-website-solution/assets/142250556/d1dbe80e-a351-44ea-83cf-820cfe6fb475">
+
+2. Install NFS Client
+
+```
+sudo yum install nfs-utils nfs4-acl-tools -y
+```
+
+3. Mount /var/www/ and target the NFS server's export for apps. NFS Server private IP address = 172.31.21.18
+
+```
+sudo mkdir /var/www
+sudo mount -t nfs -o rw,nosuid 172.31.21.18:/mnt/apps /var/www
+```
+
+4. Verify that NFS was mounted successfully by running df -h. Ensure that the changes will persist after reboot.
+
+```
+df -h
+```
+
+Result:
+
+<img width="346" alt="Screenshot 2024-06-04 at 18 00 15" src="https://github.com/sheezylion/Devops-tooling-website-solution/assets/142250556/1c8ff48b-c34d-436e-8624-19ef0f08bbb4">
+
+```
+sudo vi /etc/fstab
+```
+
+Add the following line
+
+```
+172.31.21.18:/mnt/apps /var/www nfs defaults 0 0
+```
+
+Result:
+
+<img width="362" alt="Screenshot 2024-06-04 at 18 01 38" src="https://github.com/sheezylion/Devops-tooling-website-solution/assets/142250556/5551a605-16c4-474f-a10d-6b0b210c27f3">
+
+5. Install Remi's repoeitory, Apache and PHP
+
+```
+sudo yum install httpd -y
+```
+
+```
+sudo dnf install https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm
+```
+
+```
+sudo dnf install dnf-utils http://rpms.remirepo.net/enterprise/remi-release-9.rpm
+```
+
+```
+sudo dnf module reset php
+```
+
+```
+sudo dnf module enable php:remi-8.2
+```
+
+```
+sudo dnf install php php-opcache php-gd php-curl php-mysqlnd
+```
+
+```
+sudo systemctl start php-fpm
+sudo systemctl enable php-fpm
+sudo systemctl status php-fpm
+sudo setsebool -P httpd_execmem 1
+```
+
+6. Verify that Apache files and directories are availabel on the Web Servers in /var/www and also on the NFS Server in /mnt/apps. If the same files are present in both, it means NFS was mounted correctly. test.txt file was created from Web Server 1, and it was accessible from Web Server 2.
+
+Results:
+
+<img width="349" alt="Screenshot 2024-06-04 at 18 08 20" src="https://github.com/sheezylion/Devops-tooling-website-solution/assets/142250556/6f3076b8-64d1-4127-93dc-b157e2aa41ad">
+
+<img width="331" alt="Screenshot 2024-06-04 at 18 08 59" src="https://github.com/sheezylion/Devops-tooling-website-solution/assets/142250556/ecd7e44e-5263-4261-95a4-e4e7f2ebb030">
+
+7. Locate the log folder for Apache on the Web Server and mount it to NFS server's export for logs. Repeat step 4 to ensure the mount point persists after reboot. NFSserver private ip-address= 172.31.21.18
+
+```
+sudo mount -t nfs -o rw,nosuid 172.31.21.18:/mnt/logs /var/log/httpd
+```
+
+```
+sudo vi /etc/fstab
+```
+
+```
+172.31.21.18:/mnt/logs /var/log/httpd nfs defa
+ults 0 0
+```
+
+Results:
+
+<img width="335" alt="Screenshot 2024-06-04 at 18 15 01" src="https://github.com/sheezylion/Devops-tooling-website-solution/assets/142250556/d875ffde-28e2-4cfa-987a-3e9f1b60b7db">
+
+<img width="344" alt="Screenshot 2024-06-04 at 18 18 27" src="https://github.com/sheezylion/Devops-tooling-website-solution/assets/142250556/30306ea1-ccf1-43ca-bcaf-0f867fc1c8ce">
+
+8. Fork the tooling source code from StegHub Github Account to your Github account. link: https://github.com/StegTechHub/tooling
+
+Result:
+
+<img width="1503" alt="Screenshot 2024-06-04 at 18 26 28" src="https://github.com/sheezylion/Devops-tooling-website-solution/assets/142250556/19b2d999-019a-4a08-9919-6b05169ff632">
+
+9. Download git in your webserver
+
+```
+sudo yum install git
+```
+<img width="344" alt="Screenshot 2024-06-04 at 18 29 05" src="https://github.com/sheezylion/Devops-tooling-website-solution/assets/142250556/a2cff080-cad1-48d6-a005-b402f5429680">
+
+10. Clone the repository you forked the project into
+
+```
+git clone https://github.com/StegTechHub/tooling
+```
+
+Result:
+
+<img width="341" alt="Screenshot 2024-06-04 at 18 30 18" src="https://github.com/sheezylion/Devops-tooling-website-solution/assets/142250556/570ec634-4f40-4001-8e69-93523aa3da57">
+
+11. Deploy the tooling website’s code to the Webserver. Ensure that the html folder from the repository is deployed to /var/www/html
+
+```
+cd tooling
+
+sudo cp -r html/* /var/www/html/
+```
+
+Result:
+
+<img width="326" alt="Screenshot 2024-06-04 at 18 31 25" src="https://github.com/sheezylion/Devops-tooling-website-solution/assets/142250556/aef3179b-31eb-4f60-adc4-15b8e3efd58a">
+
+Note: Acces the website on a browser
+
+- Ensure TCP port 80 is open on the Web Server.
+- If 403 Error occur, check permissions to the /var/www/html folder and also disable SELinux
+
+```
+sudo setenforce 0
+```
+
+To make the change permanent, open selinux file and set selinux to disable in your webserver.
+
+```
+sudo vi /etc/sysconfig/selinux
+
+SELINUX=disabled
+
+sudo systemctl restart httpd
+```
+
+Result:
+
+<img width="350" alt="Screenshot 2024-06-04 at 18 39 07" src="https://github.com/sheezylion/Devops-tooling-website-solution/assets/142250556/dce1fc0a-09f6-48b1-80b5-365551f7bd40">
+
+10. Update the website's configuration to connect to the database (in /var/www/html/function.php file). Apply tooling-db.sql command sudo mysql -h <db-private-IP> -u <db-username> -p <db-password < tooling-db.sql
+
+```
+sudo vi /var/www/html/functions.php
+```
+
+<img width="347" alt="Screenshot 2024-06-04 at 18 42 26" src="https://github.com/sheezylion/Devops-tooling-website-solution/assets/142250556/fa426c1a-b9d9-4931-bffe-f787b99b3636">
+
+11. In your web-server apply tooling-db.sql script to connect your database using this command, note: install mysql into your webserver
+
+```
+sudo mysql -h 172.31.26.54 -u webaccess -p tooling < tooling-db.sql
+```
+
+Result:
+<img width="344" alt="Screenshot 2024-06-04 at 19 06 54" src="https://github.com/sheezylion/Devops-tooling-website-solution/assets/142250556/8c2beed9-6eaa-45f6-a146-310490c76ba5">
+
+12. Access the database server from Web Server
+
+```
+sudo mysql -h 172.31.26.54 -u webaccess -p
+```
+13. Create in MyQSL a new admin user with username: webaccess_user and password: password
+
+```
+INSERT INTO tooling.users (id, username, password, email, user_type, status) VALUES (2, 'webaccess_user', '5f4dcc3b5aa765d61d8327deb882cf99', 'webaccess_user@mail.com', 'admin', 1);
+```
+
+<img width="838" alt="Screenshot 2024-06-04 at 19 52 15" src="https://github.com/sheezylion/Devops-tooling-website-solution/assets/142250556/63f853e6-9480-48ca-94cd-3fcebede582a">
+
+14. Open a browser and access the website using the Web Server public IP address http://<Web-Server-public-IP-address>/index.php. Ensure login into the website with webaccess_user.
+
+From Web Server 1
+
+Results:
+
+<img width="1368" alt="Screenshot 2024-06-04 at 20 05 42" src="https://github.com/sheezylion/Devops-tooling-website-solution/assets/142250556/3d48b75e-d0c1-4b78-b9f5-2959d6524f75">
+
+<img width="1679" alt="Screenshot 2024-06-04 at 20 05 53" src="https://github.com/sheezylion/Devops-tooling-website-solution/assets/142250556/3e452baa-095d-4a51-9596-b3a9207dc0b2">
+
+### Conclusion
+
+We have successfully implemented and deployed a DevOps tooling website solution that makes access to DevOps tools within the corporate infrastructure easily accessible. This comprises multiple web servers sharing a common database and also accessing the same files using Network File System (NFS) as shared file storage.
